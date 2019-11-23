@@ -1,0 +1,29 @@
+Resources:
+  SNSErrorQueue:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: ${self:custom.error_topic_sns_name}
+      TopicName: ${self:custom.error_topic_sns_name}
+  STDynamoDbTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ${self:custom.st_table_name}
+      AttributeDefinitions:
+        - AttributeName: keyword
+          AttributeType: S
+      KeySchema:
+        - AttributeName: keyword
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: ${file(config/capacity.yml):dynamodb-read-capacity-${self:provider.env}}
+        WriteCapacityUnits: ${file(config/capacity.yml):dynamodb-write-capacity-${self:provider.env}}
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      TimeToLiveSpecification:
+        AttributeName: expireAt
+        Enabled: true
+  STKinesisStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: ${self:custom.st_stream_name}
+      ShardCount: 1

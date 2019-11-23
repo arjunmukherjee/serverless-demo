@@ -1,0 +1,87 @@
+helloWorld:
+  onError: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+  handler: src.handlers.simple_handler.hello_world
+  events:
+    - http:
+        path: api/v1/hello
+        method: get
+        private: false
+        cors: true
+testSns:
+  onError: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+  handler: src.handlers.simple_handler.test_sns
+  events:
+    - http:
+        path: api/v1/test
+        cors: true
+        private: false
+        method: get
+testDynamoSave:
+  onError: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+  handler: src.handlers.dynamo_handler.demo_dynamo_save
+  events:
+    - http:
+        path: api/v1/save/{keyword}/{data}
+        private: false
+        method: post
+        cors: true
+        request:
+          parameters:
+            paths:
+              keyword: true
+              data: true
+testDynamoFind:
+  onError: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+  handler: src.handlers.dynamo_handler.demo_dynamo_find
+  events:
+    - http:
+        path: api/v1/find/{keyword}
+        private: false
+        method: get
+        cors: true
+        request:
+          parameters:
+            paths:
+              keyword: true
+testDynamoEventTrigger:
+  onError: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+  handler: src.handlers.dynamo_handler.demo_dynamo_event
+  events:
+    - stream:
+        type: dynamodb
+        arn:
+          Fn::GetAtt:
+            - STDynamoDbTable
+            - StreamArn
+        batchSize: 1
+testKinesisEventTrigger:
+  onError: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+  handler: src.handlers.kinesis_handler.demo_kinesis_event
+  events:
+    - stream:
+        type: kinesis
+        arn:
+          Fn::GetAtt:
+            - STKinesisStream
+            - Arn
+        batchSize: 1
+        startingPosition: LATEST
+sendEmail:
+  runtime: nodejs8.10
+  onError: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+  handler: handler.send
+  events:
+    - http:
+        path: api/v1/email/send
+        method: post
+        cors: true
+snsErrorHandler:
+  handler: src.sns.sns_handler.error_handler
+  events:
+    - sns: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+#proto:
+#    handler: functions/proto.handler
+#    events:
+#      - http:
+#          path: /proto
+#          method: get

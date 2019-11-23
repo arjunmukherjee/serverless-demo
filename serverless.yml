@@ -1,0 +1,40 @@
+service: serverless-test
+
+provider:
+  name: aws
+  runtime: python3.6
+  timeout: 20
+  cfLogs: true
+  role: serverlessTestRole
+  region: ${opt:region, 'us-west-2'}
+  account: ${opt:account, ''}
+  env: ${opt:env, 'dev'}
+  stage: ${opt:stage, 'pri'}
+  versionFunctions: false # optional, default is true
+  memorySize: 1024 # optional, in MB, default is 1024
+  environment:
+    ST_ENVIRONMENT_NAME: ${self:provider.env}
+    ST_SNS_ARN: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+    ST_AWS_REGION: ${self:provider.region}
+    ST_TABLE_NAME: ${self:custom.st_table_name}
+    ST_STREAM_NAME: ${self:custom.st_stream_name}
+    EMAIL: ${self:custom.secrets.EMAIL}
+    DOMAIN: ${self:custom.secrets.DOMAIN}
+    SLACK_WEBHOOK: ${self:custom.secrets.WEBHOOK}
+  tags:
+    ENVIRONMENT: ${self:provider.env}-${self:provider.stage}
+
+plugins:
+  - serverless-python-requirements
+  - serverless-domain-manager
+  #- serverless-apigw-binary
+
+custom: ${file(config/variables.yml)}
+
+functions: ${file(config/functions.yml)}
+
+resources:
+  - ${file(config/resources.yml)}
+  - ${file(config/policy.yml)}
+
+

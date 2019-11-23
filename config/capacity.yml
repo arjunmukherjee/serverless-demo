@@ -1,0 +1,2 @@
+dynamodb-read-capacity-dev: 5
+dynamodb-write-capacity-dev: 5

@@ -1,0 +1,19 @@
+pythonRequirements:
+    dockerizePip: non-linux
+
+secrets: ${file(secrets.json)}
+
+apigwBinary:
+    types:
+        - 'application/x-protobuf'
+
+customDomain:
+    domainName: st-${self:provider.env}.${self:custom.domain_name}
+    certificateName: '*.${self:custom.domain_name}'
+    createRoute53Record: true
+domain_name: ${opt:domain, 'example.com'}
+
+st_table_name: st-${self:provider.env}
+st_stream_name: st-${self:provider.env}
+error_topic_sns_name: st-error-${self:provider.env}
+iam_role_name: st-role-${self:provider.env}

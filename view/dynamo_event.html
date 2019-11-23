@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+        <title>Lambda demo</title>
+    </head>
+
+    <body class="bg-secondary">
+
+    <nav class="navbar navbar-expand-lg bg-dark text-white">
+        <div class="p-3 mb-2 bg-dark text-white">LAMBDA DEMO</div>
+        <a class="navbar-brand" href="#"></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item active">
+                    <a class="nav-link" href="https://s3-us-west-2.amazonaws.com/arjun-demo/demo.html">Emailer</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Dynamo</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="card-columns">
+        <div class="p-3 mb-2 bg-dark text-white card" style="width: 25rem;">
+            <form id="findForm">
+                <div class="form-group">
+                    <input type="text" name="keyword" class="form-control" placeholder="keyword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="find" value="find">Find</button>
+
+                <div class="form-group">
+                    <textarea rows="3" name="content" class="form-control" disabled hidden></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="p-3 mb-2 bg-dark text-white card" style="width: 25rem;">
+            <form id="saveForm">
+                <div class="form-group">
+                    <input type="text" name="keyword" class="form-control" placeholder="keyword" required>
+                </div>
+                <div class="form-group">
+                    <textarea rows="2" name="content" class="form-control" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" id="save" value="save">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <hr>
+    <div>
+        <form id="resetForm">
+            <div id="toast"></div>
+            <button type="submit" class="btn btn-primary" id="reset" value="reset">Reset</button>
+        </form>
+    </div>
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <script>
+        const findForm = document.getElementById('findForm')
+        const saveForm = document.getElementById('saveForm')
+        const resetForm = document.getElementById('resetForm')
+        var url = 'https://st-dev.cb-learning.com/api/v1/'
+        const toast = document.getElementById('toast')
+        const findSubmit = document.getElementById('find')
+        const saveSubmit = document.getElementById('save')
+
+        function getOrPost(method, url, form, callback) {
+          var req = new XMLHttpRequest();
+          req.open(method, url, true);
+          req.addEventListener("load", function () {
+            if (req.status < 400) {
+              callback(null, form, JSON.parse(req.responseText));
+            } else {
+              callback(new Error("Request failed: " + req.statusText));
+            }
+          });
+          req.send();
+        }
+        function success (res, form) {
+          toast.innerHTML = ''
+          form.keyword.focus()
+          form.content.value = res
+          form.content.hidden = false
+        }
+        function error (err, form) {
+          toast.innerHTML = 'There was an error with sending your message, hold up until I fix it. Thanks for waiting.'
+          console.log(err)
+        }
+
+        resetForm.addEventListener('submit', function (e) {
+            findSubmit.disabled = false
+            findSubmit.hidden = false
+            findForm.keyword.value = ''
+            findForm.keyword.disabled = false
+            findForm.content.value = ''
+            findForm.content.hidden = true
+            findForm.content.disabled = true
+
+            saveSubmit.disabled = false
+            saveForm.keyword.value = ''
+            saveForm.content.value = ''
+            saveForm.keyword.disabled = false
+            saveForm.content.disabled = false
+            toast.innerHTML = ''
+        })
+
+        saveForm.addEventListener('submit', function (e) {
+            e.preventDefault()
+            toast.innerHTML = 'Saving'
+            saveSubmit.disabled = true
+            saveForm.keyword.disabled = true
+            saveForm.content.disabled = true
+
+            keyword = saveForm.keyword.value
+            data = saveForm.content.value
+            url = url + 'save/' + keyword + '/' + data
+            getOrPost('POST', url, saveForm, function (err, form, res) {
+                if (err) { return error(err) }
+                success(res, form)
+            })
+        })
+
+        findForm.addEventListener('submit', function (e) {
+            e.preventDefault()
+            toast.innerHTML = 'Searching'
+            findSubmit.disabled = true
+            findSubmit.hidden = true
+            findForm.keyword.disabled = true
+
+            keyword = findForm.keyword.value
+            url = url + 'find/' + keyword
+            getOrPost('GET', url, findForm, function (err, form, res) {
+                if (err) { return error(err) }
+                success(res, form)
+            })
+        })
+    </script>
+
+  </body>
+</html>

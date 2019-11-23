@@ -1,0 +1,112 @@
+Resources:
+  STDynamoDBIamPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn: STDynamoDbTable
+    Properties:
+      PolicyName: lambda_dynamodb
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:ListTables
+              - dynamodb:DescribeTable
+            Resource:
+              Fn::GetAtt:
+                - STDynamoDbTable
+                - Arn
+      Roles:
+        - Ref: ${self:provider.role}
+  STDynamoDBStreamIamPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn: STDynamoDbTable
+    Properties:
+      PolicyName: lambda_dynamodb_stream
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:DescribeStream
+              - dynamodb:ListStreams
+              - dynamodb:GetShardIterator
+              - dynamodb:BatchGetItem
+              - dynamodb:GetRecords
+            Resource:
+              Fn::GetAtt:
+                - STDynamoDbTable
+                - StreamArn
+      Roles:
+        - Ref: ${self:provider.role}
+  STKinesisStreamIamPolicy:
+    Type: AWS::IAM::Policy
+    DependsOn: STKinesisStream
+    Properties:
+      PolicyName: lambda_kinesis_stream
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - kinesis:DescribeStream
+              - kinesis:ListStreams
+              - kinesis:GetShardIterator
+              - kinesis:GetRecords
+              - kinesis:PutRecord
+            Resource:
+              Fn::GetAtt:
+                - STKinesisStream
+                - Arn
+      Roles:
+        - Ref: ${self:provider.role}
+  serverlessTestRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ${self:custom.iam_role_name}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: logging_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+        - PolicyName: lambda_invoke_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: arn:aws:lambda:*:*:*
+        - PolicyName: sns_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: arn:aws:sns:${self:provider.region}:${self:provider.account}:${self:custom.error_topic_sns_name}
+        - PolicyName: ses_policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                Resource: arn:aws:ses:*
